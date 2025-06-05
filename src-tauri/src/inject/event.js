@@ -235,8 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.open = function (url, name, specs) {
     // Apple login and google login
     if (name === 'AppleAuthentication') {
-      // do nothing
-    } else if (specs && (specs.includes('height=') || specs.includes('width='))) {
+      return originalWindowOpen.call(window, url, name, specs);
+    }
+
+    if (specs && (specs.includes('height=') || specs.includes('width='))) {
       location.href = url;
     } else {
       const baseUrl = window.location.origin + window.location.pathname;
@@ -247,8 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
         handleExternalLink(hrefUrl.href);
       }
     }
-    // Call the original window.open function to maintain its normal functionality.
-    return originalWindowOpen.call(window, url, name, specs);
+
+    // Do not open a new native window; behave as handled above.
+    return null;
   };
 
   // Set the default zoom, There are problems with Loop without using try-catch.
@@ -328,5 +331,5 @@ function isSameBaseDomain(url1, url2) {
 
 function isBilibiliUrl(url) {
   const hostname = url.hostname || new URL(url).hostname;
-  return /(?:\.bilibili\.com|\.bilibili\.tv|^b23\.tv)$/.test(hostname);
+  return /(?:^|\.)bilibili\.com$|(?:^|\.)bilibili\.tv$|^b23\.tv$/.test(hostname);
 }
