@@ -195,11 +195,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const absoluteUrl = hrefUrl.href;
       let filename = anchorElement.download || getFilenameFromUrl(absoluteUrl);
 
-      // Handle _blank target links. Open in the current window when the link is
-      // from the same origin; otherwise open externally.
+      // Handle _blank target links. For sites such as Bilibili that use
+      // subdomains, treat links from the same base domain as internal so they
+      // open within the current window.
       if (target === '_blank') {
         e.preventDefault();
-        if (hrefUrl.origin === window.location.origin) {
+        if (isSameBaseDomain(hrefUrl, window.location)) {
           location.href = hrefUrl.href;
         } else {
           handleExternalLink(hrefUrl.href);
@@ -238,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       const baseUrl = window.location.origin + window.location.pathname;
       const hrefUrl = new URL(url, baseUrl);
-      if (hrefUrl.origin === window.location.origin) {
+      if (isSameBaseDomain(hrefUrl, window.location)) {
         location.href = hrefUrl.href;
       } else {
         handleExternalLink(hrefUrl.href);
@@ -307,4 +308,18 @@ function setDefaultZoom() {
 function getFilenameFromUrl(url) {
   const urlPath = new URL(url).pathname;
   return urlPath.substring(urlPath.lastIndexOf('/') + 1);
+}
+
+function getBaseDomain(url) {
+  const hostname = url.hostname || new URL(url).hostname;
+  const parts = hostname.split('.');
+  return parts.slice(-2).join('.');
+}
+
+function isSameBaseDomain(url1, url2) {
+  try {
+    return getBaseDomain(url1) === getBaseDomain(url2);
+  } catch (e) {
+    return false;
+  }
 }
