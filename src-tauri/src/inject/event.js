@@ -195,9 +195,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const absoluteUrl = hrefUrl.href;
       let filename = anchorElement.download || getFilenameFromUrl(absoluteUrl);
 
-      // Handling external link redirection, _blank will automatically open.
+      // Handle _blank target links. Open in the current window when the link is
+      // from the same origin; otherwise open externally.
       if (target === '_blank') {
         e.preventDefault();
+        if (hrefUrl.origin === window.location.origin) {
+          location.href = hrefUrl.href;
+        } else {
+          handleExternalLink(hrefUrl.href);
+        }
         return;
       }
 
@@ -226,13 +232,17 @@ document.addEventListener('DOMContentLoaded', () => {
   window.open = function (url, name, specs) {
     // Apple login and google login
     if (name === 'AppleAuthentication') {
-      //do nothing
+      // do nothing
     } else if (specs && (specs.includes('height=') || specs.includes('width='))) {
       location.href = url;
     } else {
       const baseUrl = window.location.origin + window.location.pathname;
       const hrefUrl = new URL(url, baseUrl);
-      handleExternalLink(hrefUrl.href);
+      if (hrefUrl.origin === window.location.origin) {
+        location.href = hrefUrl.href;
+      } else {
+        handleExternalLink(hrefUrl.href);
+      }
     }
     // Call the original window.open function to maintain its normal functionality.
     return originalWindowOpen.call(window, url, name, specs);
