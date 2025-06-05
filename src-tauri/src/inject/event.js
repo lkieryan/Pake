@@ -195,12 +195,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const absoluteUrl = hrefUrl.href;
       let filename = anchorElement.download || getFilenameFromUrl(absoluteUrl);
 
-      // Handle _blank target links. For sites such as Bilibili that use
-      // subdomains, treat links from the same base domain as internal so they
-      // open within the current window.
+      // Handle links that request a new window. Bilibili often opens pages with
+      // `target="_blank"` even when navigating within the site. Treat any link
+      // pointing to a known Bilibili domain or the same base domain as internal
+      // navigation so it loads in the current view instead of launching the
+      // system browser.
       if (target === '_blank') {
         e.preventDefault();
-        if (isSameBaseDomain(hrefUrl, window.location)) {
+        if (isBilibiliUrl(hrefUrl) || isSameBaseDomain(hrefUrl, window.location)) {
           location.href = hrefUrl.href;
         } else {
           handleExternalLink(hrefUrl.href);
@@ -239,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       const baseUrl = window.location.origin + window.location.pathname;
       const hrefUrl = new URL(url, baseUrl);
-      if (isSameBaseDomain(hrefUrl, window.location)) {
+      if (isBilibiliUrl(hrefUrl) || isSameBaseDomain(hrefUrl, window.location)) {
         location.href = hrefUrl.href;
       } else {
         handleExternalLink(hrefUrl.href);
@@ -322,4 +324,9 @@ function isSameBaseDomain(url1, url2) {
   } catch (e) {
     return false;
   }
+}
+
+function isBilibiliUrl(url) {
+  const hostname = url.hostname || new URL(url).hostname;
+  return /(?:\.bilibili\.com|\.bilibili\.tv|^b23\.tv)$/.test(hostname);
 }
